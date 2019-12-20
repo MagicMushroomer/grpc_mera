@@ -17,7 +17,6 @@ public class HelloJsonServer {
     private static final Logger logger = Logger.getLogger(HelloJsonServer.class.getName());
 
     private Server server;
-
     private void start() throws IOException {
         /* The port on which the server should run */
         int port = 50051;
@@ -67,10 +66,11 @@ public class HelloJsonServer {
 
     private static class GreeterImpl implements BindableService {
 
-        private void sayHello(HelloRequest req, StreamObserver<HelloReply> responseObserver) {
+        private void sayHello(HelloRequest req, StreamObserver<HelloReply> responseObserver) throws Exception {
             HelloReply reply = HelloReply.newBuilder().setMessage("Hello " + req.getName()).build();
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
+            KafkaProducerHello.runProducer("Hello " + req.getName());
         }
 
         @Override
@@ -83,7 +83,11 @@ public class HelloJsonServer {
                                         @Override
                                         public void invoke(
                                                 HelloRequest request, StreamObserver<HelloReply> responseObserver) {
-                                            sayHello(request, responseObserver);
+                                            try {
+                                                sayHello(request, responseObserver);
+                                            } catch (Exception e) {
+                                                e.printStackTrace();
+                                            }
                                         }
                                     }))
                     .build();
